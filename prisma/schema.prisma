@@ -1,0 +1,261 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum ContenderType {
+  USER
+  TEAM
+}
+
+enum ScheduleType {
+  TOURNAMENT
+  STAGE
+  PHASE
+}
+
+enum TournamentFormat {
+  ONE_STAGE
+  TWO_STAGE
+}
+
+enum TournamentStatus {
+  UNSTARTED
+  STARTED
+  DONE
+}
+
+enum StageType {
+  ROUND_ROBIN
+  QUALIFIERS
+  SWISS
+  FINAL_STAGE
+}
+
+enum FinalStageFormat {
+  SINGLE_ELIMINATION
+  DOUBLE_ELIMINATION
+}
+
+model User {
+  id         String       @id @default(cuid())
+  username   String       @unique
+  email      String       @unique
+  password   String
+  avatar     String?
+  bio        String?
+  country    String?
+  verified   Boolean      @default(false)
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+  tournament Tournament[]
+  staff      Staff[]
+  members    Member[]
+}
+
+model Tournament {
+  id          String      @id @default(cuid())
+  title       String
+  image       String?
+  description String?
+  format      String
+  status      String
+  as_team     Boolean?
+  use_seed    Boolean?
+  team_size   Int?
+  min_rank    Int?
+  max_rank    Int?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  ownerId     String
+  owner       User        @relation(fields: [ownerId], references: [id])
+  stages      Stage[]
+  staff       Staff[]
+  contenders  Contender[]
+}
+
+model Stage {
+  id                String      @id @default(cuid())
+  name              String
+  type              String
+  format            String
+  status            String
+  number_contenders Int
+  tournamentId      String
+  tournament        Tournament  @relation(fields: [tournamentId], references: [id])
+  phases            Phase[]
+  contenders        Contender[]
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+}
+
+model Phase {
+  id                String      @id @default(cuid())
+  name              String
+  type              String
+  format            String
+  status            String
+  number_contenders Int
+  stageId           String
+  stage             Stage       @relation(fields: [stageId], references: [id])
+  groups            Group[]
+  contenders        Contender[]
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+  Match             Match[]
+}
+
+model Team {
+  id           String   @id @default(cuid())
+  name         String
+  image        String?
+  size         Int
+  average_rank Float?
+  members      Member[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Member {
+  id        String       @id @default(cuid())
+  status    String
+  teamId    String
+  userId    String
+  team      Team         @relation(fields: [teamId], references: [id])
+  user      User         @relation(fields: [userId], references: [id])
+  roles     MemberRole[]
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  @@unique([teamId, userId])
+}
+
+model MemberRole {
+  id        String   @id @default(cuid())
+  memberId  String
+  roleId    String
+  member    Member   @relation(fields: [memberId], references: [id])
+  role      Role     @relation(fields: [roleId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([memberId, roleId])
+}
+
+model Schedule {
+  id               String       @id @default(cuid())
+  start_at         DateTime
+  end_at           DateTime
+  scheduleableId   String
+  scheduleableType ScheduleType
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  Match            Match[]
+}
+
+model Role {
+  id        String       @id @default(cuid())
+  name      String       @unique
+  members   MemberRole[]
+  staff     StaffRole[]
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+}
+
+model Staff {
+  id           String      @id @default(cuid())
+  status       String
+  userId       String
+  tournamentId String
+  user         User        @relation(fields: [userId], references: [id])
+  tournament   Tournament  @relation(fields: [tournamentId], references: [id])
+  roles        StaffRole[]
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  @@unique([userId, tournamentId])
+}
+
+model StaffRole {
+  id        String   @id @default(cuid())
+  staffId   String
+  roleId    String
+  staff     Staff    @relation(fields: [staffId], references: [id])
+  role      Role     @relation(fields: [roleId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([staffId, roleId])
+}
+
+model Group {
+  id         String      @id @default(cuid())
+  name       String
+  phaseId    String
+  phase      Phase       @relation(fields: [phaseId], references: [id])
+  contenders Contender[]
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+}
+
+model Contender {
+  id                  String        @id @default(cuid())
+  contenderId         String
+  contenderType       ContenderType
+  status              String
+  seed                Int?
+  is_eliminated       Boolean?
+  tournamentId        String
+  tournament          Tournament    @relation(fields: [tournamentId], references: [id])
+  stageId             String?
+  stage               Stage?        @relation(fields: [stageId], references: [id])
+  phaseId             String?
+  phase               Phase?        @relation(fields: [phaseId], references: [id])
+  groupId             String?
+  group               Group?        @relation(fields: [groupId], references: [id])
+  eliminatedAtPhaseId String?
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+
+  matchesAsContender1 Match[] @relation(name: "MatchContender1")
+  matchesAsContender2 Match[] @relation(name: "MatchContender2")
+  matchesAsWinner     Match[] @relation(name: "MatchWinner")
+
+  @@unique([contenderId, tournamentId])
+}
+
+enum MatchType {
+  FINAL_STAGE
+  ROUND_ROBIN
+  QUALIFIERS
+}
+
+model Match {
+  id                String @id @default(cuid())
+  contender1Id      String?
+  contender1        Contender? @relation(name: "MatchContender1", fields: [contender1Id], references: [id])
+  contender2Id      String?
+  contender2        Contender? @relation(name: "MatchContender2", fields: [contender2Id], references: [id])
+  winnerId          String?
+  winner            Contender? @relation(name: "MatchWinner", fields: [winnerId], references: [id])
+  contender1Score   Int @default(0)
+  contender2Score   Int @default(0)
+  status            String
+  isCompleted       Boolean @default(false)
+  scheduleId        String?
+  schedule          Schedule? @relation(fields: [scheduleId], references: [id])
+  phaseId           String
+  phase             Phase  @relation(fields: [phaseId], references: [id])
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
