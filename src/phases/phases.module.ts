@@ -7,6 +7,7 @@ import { MatchesModule } from 'src/matches/matches.module';
 @Module({
   imports: [MatchesModule],
   controllers: [PhasesController],
-  providers: [PhasesService, PrismaService]
+  providers: [PhasesService, PrismaService],
+  exports: [PhasesService]
 })
 export class PhasesModule {}

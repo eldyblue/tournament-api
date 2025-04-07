@@ -7,6 +7,7 @@ import { PrismaService } from 'src/prisma.service';
 @Module({
     imports: [PhasesModule],
     controllers: [StagesController],
-    providers: [StagesService, PrismaService]
+    providers: [StagesService, PrismaService],
+    exports: [StagesService]
 })
 export class StagesModule {}

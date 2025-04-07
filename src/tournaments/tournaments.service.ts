@@ -24,63 +24,51 @@ export class TournamentsService {
         return await this.prisma.tournament.findFirst({
             where: {
                 id
+            },
+            include: {
+                stages: {
+                    include: {
+                        phases: true
+                    }
+                }
             }
         })
     }
 
     async create(data: CreateTournamentDto): Promise<Tournament | PrismaClientKnownRequestError> {
 
-        const { preliminaryStageType, finalStageFormat, preliminaryStageContenders, finalStageContenders, userId, ...tournamentData } = data
+        console.log(data)
+        const {finalStageFormat, finalStageContenders, userId, ...tournamentData } = data
 
-        if (!Object.values(FinalStageFormat).includes(finalStageFormat as FinalStageFormat)) {
-            throw new BadRequestException('Invalid final stage format');
-        }
-
-        const finalStageCreateInput: Prisma.StageCreateWithoutTournamentInput = {
-            name: "Final Stage",
-            type: StageType.FINAL_STAGE,
-            format: finalStageFormat,
-            status: "unstarted",
-            number_contenders: finalStageContenders
-        }
-
-        let stages: Prisma.StageCreateManyTournamentInput = {
-            ...finalStageCreateInput
-        }
-
-        // Handle preliminary stage.
-        if (preliminaryStageType) {
-            if (!Object.values(StageType).includes(preliminaryStageType as StageType)) {
-                throw new BadRequestException('Invalid stage type');
-            }
-
-            const preliminaryStageCreateInput: Prisma.StageCreateWithoutTournamentInput = {
-                name: preliminaryStageType?.toString() as string,
-                type: preliminaryStageType as string,
-                format: "test",
-                status: "unstarted",
-                number_contenders: preliminaryStageContenders as number
-            }
-
-            stages = {
-                ...stages,
-                ...preliminaryStageCreateInput
-            }
-        }
+        const finalStageInput: Prisma.StageCreateWithoutTournamentInput = await this.stagesService.generateStage(StageType.FINAL_STAGE, finalStageContenders)
+        console.log(finalStageInput)
 
         const tournamentCreateInput: Prisma.TournamentCreateInput = {
             ...tournamentData,
-            owner: { connect: { id: userId } },
-            stages: { 
-                createMany: {
-                    data: stages
-                }
-            }
+            owner: { connect: { id: userId } }
         }
 
-        return this.prisma.tournament.create({
+        const tournament = await this.prisma.tournament.create({
             data: tournamentCreateInput
         })
+        console.log(tournament)
+
+        const stage = await this.prisma.stage.create({
+            data: {
+                ...finalStageInput,
+                tournamentId: tournament.id
+            }
+        })
+        console.log(stage)
+
+        const phasesInput: Prisma.PhaseCreateManyInput[] = await this.phasesService.generatePhases(stage, finalStageContenders)
+        console.log(phasesInput)
+
+        const phases = await this.prisma.phase.createMany({
+            data: phasesInput
+        })
+
+        return tournament
     }
 
     async addStaff(tournamentId: string, userId: string): Promise<Staff | PrismaClientKnownRequestError> {

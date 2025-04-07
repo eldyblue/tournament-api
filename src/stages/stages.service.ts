@@ -38,12 +38,12 @@ export class StagesService {
         }
     }
 
-    generateStage(type: StageType, contendersCount: number): Prisma.StageCreateWithoutTournamentInput {
+    async generateStage(type: StageType, contendersCount: number): Promise<Prisma.StageCreateWithoutTournamentInput> {
 
         const stageCreateInput: Prisma.StageCreateWithoutTournamentInput = {
             name: "Final Stage",
             type: type,
-            format: "test",
+            format: "SINGLE_ELIMINATION",
             status: "unstarted",
             number_contenders: contendersCount
         }

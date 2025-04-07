@@ -15,10 +15,6 @@ export class CreateTournamentDto {
 
     status: TournamentStatus
 
-    preliminaryStageType: StageType | null
-
-    preliminaryStageContenders: number | null
-
     finalStageFormat: FinalStageFormat
 
     @IsNumber()

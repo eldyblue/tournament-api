@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Phase, Prisma, StageType } from '@prisma/client';
+import { Phase, Prisma, Stage, StageType } from '@prisma/client';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { PrismaService } from 'src/prisma.service';
 
@@ -37,21 +37,22 @@ export class PhasesService {
         }
     }
 
-    generatePhases(stageType: StageType, contendersCount: number): Array<Prisma.PhaseCreateWithoutStageInput> {
-        let phases: Prisma.PhaseCreateWithoutStageInput[] = []
+    async generatePhases(stage: Stage, contendersCount: number): Promise<Array<Prisma.PhaseCreateManyInput>> {
+        let phases: Prisma.PhaseCreateManyInput[] = []
 
-        if (stageType === StageType.FINAL_STAGE) {
+        if (stage.type === StageType.FINAL_STAGE) {
             let contenders = contendersCount
             while (contenders >= 2) {
-                const phase: Prisma.PhaseCreateWithoutStageInput = {
+                const phase: Prisma.PhaseCreateManyInput = {
                     name: this.getRoundName(contenders),
                     type: "test",
                     format: "test",
                     status: "unstarted",
                     number_contenders: contenders,
+                    stageId: stage.id
                 }
                 phases.push(phase)
-                contenders / 2
+                contenders /= 2
             }
         }
         return phases;
@@ -59,23 +60,23 @@ export class PhasesService {
 
     private getRoundName(contenders: number): string {
         switch (contenders) {
-          case 2:
-            return 'Final';
-          case 4:
-            return 'Semi Final';
-          case 8:
-            return 'Quarter Final';
-          case 16:
-            return 'Round of 16';
-          case 32:
-            return 'Round of 32';
-          case 64:
-            return 'Round of 64';
-          case 128:
-            return 'Round of 128';
-          default:
-            return `Round of ${contenders}`;
+            case 2:
+                return 'Final';
+            case 4:
+                return 'Semi Final';
+            case 8:
+                return 'Quarter Final';
+            case 16:
+                return 'Round of 16';
+            case 32:
+                return 'Round of 32';
+            case 64:
+                return 'Round of 64';
+            case 128:
+                return 'Round of 128';
+            default:
+                return `Round of ${contenders}`;
         }
-      }
+    }
 
 }
