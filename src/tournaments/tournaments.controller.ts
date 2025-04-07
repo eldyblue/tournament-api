@@ -1,8 +1,9 @@
-import { Body, Controller, Delete, Get, NotFoundException, Param, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, NotFoundException, Param, Post, UseGuards } from '@nestjs/common';
 import { TournamentsService } from './tournaments.service';
 import { Prisma } from '@prisma/client';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { CreateTournamentDto } from './dto/CreateTournament.dto';
+import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 
 @Controller('tournaments')
 export class TournamentsController {
@@ -23,6 +24,7 @@ export class TournamentsController {
     }
 
     @Post()
+    @UseGuards(JwtAuthGuard)
     async create(@Body() postData: CreateTournamentDto) {
         const result = await this.tournamentsService.create(postData)
         if (result instanceof PrismaClientKnownRequestError) {
@@ -32,6 +34,7 @@ export class TournamentsController {
     }
 
     @Post('/addStaff')
+    @UseGuards(JwtAuthGuard)
     async addStaff(@Body() postData: {
         tournamentId: string,
         userId: string
@@ -44,6 +47,7 @@ export class TournamentsController {
     }
 
     @Post('/addContender')
+    @UseGuards(JwtAuthGuard)
     async addContender(@Body() postData: {
         tournamentId: string,
         contenderId: string,
@@ -57,6 +61,7 @@ export class TournamentsController {
     }
 
     @Delete(':id')
+    @UseGuards(JwtAuthGuard)
     async delete(@Param('id') id: string) {
         const result = await this.tournamentsService.delete(id)
         if (result instanceof PrismaClientKnownRequestError) {

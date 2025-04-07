@@ -1,7 +1,8 @@
-import { Body, Controller, Delete, Get, NotFoundException, Param, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, NotFoundException, Param, Post, UseGuards } from '@nestjs/common';
 import { StagesService } from './stages.service';
 import { Prisma } from '@prisma/client';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
+import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 
 @Controller('stages')
 export class StagesController {
@@ -49,6 +50,7 @@ export class StagesController {
     }
 
     @Delete(':id')
+    @UseGuards(JwtAuthGuard)
     async delete(@Param('id') id: string) {
         const result = await this.stagesService.delete(id)
         if (result instanceof PrismaClientKnownRequestError) {
