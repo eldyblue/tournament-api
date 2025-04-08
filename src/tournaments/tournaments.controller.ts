@@ -5,6 +5,7 @@ import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { CreateTournamentDto } from './dto/CreateTournament.dto';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { IsTournamentOwnerGuard } from './isTournamentOwner.guard';
 
 @ApiTags('tournaments')
 @Controller('tournaments')
@@ -37,29 +38,31 @@ export class TournamentsController {
         return result
     }
 
-    @Post('/addStaff')
-    @UseGuards(JwtAuthGuard)
+    @Post('/:id/addStaff')
+    @UseGuards(JwtAuthGuard, IsTournamentOwnerGuard)
     @ApiBearerAuth()
-    async addStaff(@Body() postData: {
-        tournamentId: string,
-        userId: string
+    async addStaff(
+        @Param('id') tournamentId: string,
+        @Body() postData: {
+            userId: string  
     }) {
-        const result = await this.tournamentsService.addStaff(postData.tournamentId, postData.userId)
+        const result = await this.tournamentsService.addStaff(tournamentId, postData.userId)
         if (result instanceof PrismaClientKnownRequestError) {
             throw new NotFoundException
         }
         return result
     }
 
-    @Post('/addContender')
-    @UseGuards(JwtAuthGuard)
+    @Post('/:id/addContender')
+    @UseGuards(JwtAuthGuard, IsTournamentOwnerGuard)
     @ApiBearerAuth()
-    async addContender(@Body() postData: {
-        tournamentId: string,
-        contenderId: string,
-        asTeam: boolean
+    async addContender(
+        @Param('id') tournamentId: string,
+        @Body() postData: {
+            contenderId: string,
+            asTeam: boolean
     }) {
-        const result = await this.tournamentsService.addContender(postData.tournamentId, postData.contenderId, postData.asTeam)
+        const result = await this.tournamentsService.addContender(tournamentId, postData.contenderId, postData.asTeam)
         if (result instanceof PrismaClientKnownRequestError) {
             throw new NotFoundException
         }
@@ -67,7 +70,7 @@ export class TournamentsController {
     }
 
     @Delete(':id')
-    @UseGuards(JwtAuthGuard)
+    @UseGuards(JwtAuthGuard, IsTournamentOwnerGuard)
     @ApiBearerAuth()
     async delete(@Param('id') id: string) {
         const result = await this.tournamentsService.delete(id)
