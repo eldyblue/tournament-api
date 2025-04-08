@@ -4,7 +4,9 @@ import { Prisma } from '@prisma/client';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { CreateTournamentDto } from './dto/CreateTournament.dto';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('tournaments')
 @Controller('tournaments')
 export class TournamentsController {
     constructor(private tournamentsService: TournamentsService) {}
@@ -26,6 +28,7 @@ export class TournamentsController {
     @Post()
     @UseGuards(JwtAuthGuard)
     @UsePipes(ValidationPipe)
+    @ApiBearerAuth()
     async create(@Body() postData: CreateTournamentDto) {
         const result = await this.tournamentsService.create(postData)
         if (result instanceof PrismaClientKnownRequestError) {
