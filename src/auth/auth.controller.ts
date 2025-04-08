@@ -14,7 +14,7 @@ export class AuthController {
     @UseGuards(LocalAuthGuard)
     @Post('login')
     @ApiBody({
-        type: [LoginDto]
+        type: LoginDto
     })
     login(@Request() req) {
         return this.authService.login(req.user)
