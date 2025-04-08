@@ -3,6 +3,7 @@ import { TeamsService } from './teams.service';
 import { Body, Controller, Delete, Get, HttpException, HttpStatus, NotFoundException, Param, Post, UseGuards } from '@nestjs/common';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { ApiBearerAuth } from '@nestjs/swagger';
 
 @Controller('teams')
 export class TeamsController {
@@ -24,6 +25,7 @@ export class TeamsController {
 
     @Post()
     @UseGuards(JwtAuthGuard)
+    @ApiBearerAuth()
     async create(@Body() postData: {
         name: string, 
         size: number,
@@ -51,6 +53,7 @@ export class TeamsController {
 
     @Post('/addUser')
     @UseGuards(JwtAuthGuard)
+    @ApiBearerAuth()
     async addUser(@Body() data: {
         teamId: string,
         userId: string
@@ -64,6 +67,7 @@ export class TeamsController {
 
     @Delete(':id')
     @UseGuards(JwtAuthGuard)
+    @ApiBearerAuth()
     async delete(@Param('id') id: string) {
         const team = await this.teamsService.delete(id)
         if (team instanceof PrismaClientKnownRequestError) {

@@ -3,6 +3,7 @@ import { PhasesService } from './phases.service';
 import { Body, Controller, Delete, Get, NotFoundException, Param, Post, UseGuards } from '@nestjs/common';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { ApiBearerAuth } from '@nestjs/swagger';
 
 @Controller('phases')
 export class PhasesController {
@@ -23,6 +24,8 @@ export class PhasesController {
     }
 
     @Post()
+    @UseGuards(JwtAuthGuard)
+    @ApiBearerAuth()
     async create(@Body() postData: {
         name: string,
         type: string,
@@ -50,6 +53,7 @@ export class PhasesController {
 
     @Delete(':id')
     @UseGuards(JwtAuthGuard)
+    @ApiBearerAuth()
     async delete(@Param('id') id: string) {
         const result = await this.phasesService.delete(id)
         if (result instanceof PrismaClientKnownRequestError) {

@@ -39,6 +39,7 @@ export class TournamentsController {
 
     @Post('/addStaff')
     @UseGuards(JwtAuthGuard)
+    @ApiBearerAuth()
     async addStaff(@Body() postData: {
         tournamentId: string,
         userId: string
@@ -52,6 +53,7 @@ export class TournamentsController {
 
     @Post('/addContender')
     @UseGuards(JwtAuthGuard)
+    @ApiBearerAuth()
     async addContender(@Body() postData: {
         tournamentId: string,
         contenderId: string,
@@ -66,6 +68,7 @@ export class TournamentsController {
 
     @Delete(':id')
     @UseGuards(JwtAuthGuard)
+    @ApiBearerAuth()
     async delete(@Param('id') id: string) {
         const result = await this.tournamentsService.delete(id)
         if (result instanceof PrismaClientKnownRequestError) {
