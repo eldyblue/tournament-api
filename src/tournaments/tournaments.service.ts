@@ -35,40 +35,39 @@ export class TournamentsService {
         })
     }
 
-    async create(data: CreateTournamentDto): Promise<Tournament | PrismaClientKnownRequestError> {
+    async create(data: CreateTournamentDto): Promise<Tournament | Error> {
 
-        console.log(data)
-        const {finalStageFormat, finalStageContenders, userId, ...tournamentData } = data
+        try {
+            const {finalStageFormat, finalStageContenders, userId, ...tournamentData } = data
 
-        const finalStageInput: Prisma.StageCreateWithoutTournamentInput = await this.stagesService.generateStage(StageType.FINAL_STAGE, finalStageContenders)
-        console.log(finalStageInput)
-
-        const tournamentCreateInput: Prisma.TournamentCreateInput = {
-            ...tournamentData,
-            owner: { connect: { id: userId } }
-        }
-
-        const tournament = await this.prisma.tournament.create({
-            data: tournamentCreateInput
-        })
-        console.log(tournament)
-
-        const stage = await this.prisma.stage.create({
-            data: {
-                ...finalStageInput,
-                tournamentId: tournament.id
+            const finalStageInput: Prisma.StageCreateWithoutTournamentInput = await this.stagesService.generateStage(StageType.FINAL_STAGE, finalStageFormat, finalStageContenders)
+    
+            const tournamentCreateInput: Prisma.TournamentCreateInput = {
+                ...tournamentData,
+                owner: { connect: { id: userId } }
             }
-        })
-        console.log(stage)
-
-        const phasesInput: Prisma.PhaseCreateManyInput[] = await this.phasesService.generatePhases(stage, finalStageContenders)
-        console.log(phasesInput)
-
-        const phases = await this.prisma.phase.createMany({
-            data: phasesInput
-        })
-
-        return tournament
+    
+            const tournament = await this.prisma.tournament.create({
+                data: tournamentCreateInput
+            })
+    
+            const stage = await this.prisma.stage.create({
+                data: {
+                    ...finalStageInput,
+                    tournamentId: tournament.id
+                }
+            })
+    
+            const phasesInput: Prisma.PhaseCreateManyInput[] = await this.phasesService.generatePhases(stage, finalStageContenders)
+    
+            const phases = await this.prisma.phase.createMany({
+                data: phasesInput
+            })
+    
+            return tournament
+        } catch (err) {
+            return err
+        }
     }
 
     async addStaff(tournamentId: string, userId: string): Promise<Staff | PrismaClientKnownRequestError> {

@@ -1,5 +1,5 @@
-import { Injectable } from '@nestjs/common';
-import { Prisma, Stage, StageType } from '@prisma/client';
+import { HttpCode, HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { FinalStageFormat, Prisma, Stage, StageType } from '@prisma/client';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { PrismaService } from 'src/prisma.service';
 
@@ -38,16 +38,19 @@ export class StagesService {
         }
     }
 
-    async generateStage(type: StageType, contendersCount: number): Promise<Prisma.StageCreateWithoutTournamentInput> {
-
-        const stageCreateInput: Prisma.StageCreateWithoutTournamentInput = {
-            name: "Final Stage",
-            type: type,
-            format: "SINGLE_ELIMINATION",
-            status: "unstarted",
-            number_contenders: contendersCount
+    async generateStage(type: StageType, format: FinalStageFormat, contendersCount: number): Promise<Prisma.StageCreateWithoutTournamentInput> {
+        switch (type) {
+            case StageType.FINAL_STAGE: 
+                const stageCreateInput: Prisma.StageCreateWithoutTournamentInput = {
+                    name: "Final Stage",
+                    type: type,
+                    format: format,
+                    status: "unstarted",
+                    number_contenders: contendersCount
+                }
+                return stageCreateInput
+            default: 
+                throw new HttpException('Unhandled stage type', HttpStatus.BAD_REQUEST)
         }
-
-        return stageCreateInput
     }
 }

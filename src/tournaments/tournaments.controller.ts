@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, NotFoundException, Param, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpException, HttpStatus, NotFoundException, Param, Post, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
 import { TournamentsService } from './tournaments.service';
 import { Prisma } from '@prisma/client';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
@@ -25,10 +25,11 @@ export class TournamentsController {
 
     @Post()
     @UseGuards(JwtAuthGuard)
+    @UsePipes(ValidationPipe)
     async create(@Body() postData: CreateTournamentDto) {
         const result = await this.tournamentsService.create(postData)
         if (result instanceof PrismaClientKnownRequestError) {
-            return new NotFoundException
+            return new HttpException('Could not create the tournament, please verify your inputs.', HttpStatus.BAD_REQUEST)
         }
         return result
     }

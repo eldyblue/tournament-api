@@ -50,6 +50,18 @@ export class TeamsService {
         }
     }
 
+    async deleteMember(memberId: string): Promise<Member | PrismaClientKnownRequestError> {
+        try {
+            return await this.prisma.member.delete({
+                where: {
+                    id: memberId
+                }
+            })
+        } catch (e) {
+            return e
+        }
+    }
+
     async delete(id: string): Promise<Team | PrismaClientKnownRequestError> {
         try {
             return await this.prisma.team.delete({

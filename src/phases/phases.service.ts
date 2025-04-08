@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Phase, Prisma, Stage, StageType } from '@prisma/client';
+import { FinalStageFormat, Phase, Prisma, Stage, StageType } from '@prisma/client';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { PrismaService } from 'src/prisma.service';
 
@@ -38,24 +38,50 @@ export class PhasesService {
     }
 
     async generatePhases(stage: Stage, contendersCount: number): Promise<Array<Prisma.PhaseCreateManyInput>> {
-        let phases: Prisma.PhaseCreateManyInput[] = []
+        try {
+            let phases: Prisma.PhaseCreateManyInput[] = []
 
-        if (stage.type === StageType.FINAL_STAGE) {
-            let contenders = contendersCount
-            while (contenders >= 2) {
-                const phase: Prisma.PhaseCreateManyInput = {
-                    name: this.getRoundName(contenders),
-                    type: "test",
-                    format: "test",
-                    status: "unstarted",
-                    number_contenders: contenders,
-                    stageId: stage.id
+            if (stage.type === StageType.FINAL_STAGE) {
+                let contenders = contendersCount
+                while (contenders >= 2) {
+                    const phase: Prisma.PhaseCreateManyInput = {
+                        name: this.getRoundName(contenders),
+                        type: "test",
+                        format: "test",
+                        status: "unstarted",
+                        number_contenders: contenders,
+                        stageId: stage.id
+                    }
+                    phases.push(phase)
+                    contenders /= 2
                 }
-                phases.push(phase)
-                contenders /= 2
+    
+                if (stage.format === FinalStageFormat.DOUBLE_ELIMINATION) {
+                    let loserPhaseIndex: number = 1;
+                    let losersPhaseNumber: number = contendersCount / 2;
+    
+                    while (losersPhaseNumber > 1) {
+                        const phase: Prisma.PhaseCreateManyInput = {
+                            name: `Losers round ${loserPhaseIndex}`,
+                            type: "LOSER",
+                            format: loserPhaseIndex % 2 === 1 ? "ODD" : "PAIR",
+                            status: "unstarted",
+                            number_contenders: losersPhaseNumber,
+                            stageId: stage.id
+                        }
+                        phases.push(phase)
+    
+                        if (loserPhaseIndex % 2 === 0) {
+                            losersPhaseNumber /= 2
+                        }
+                        loserPhaseIndex++
+                    }
+                }
             }
+            return phases;
+        } catch (e) {
+            throw e
         }
-        return phases;
     }
 
     private getRoundName(contenders: number): string {

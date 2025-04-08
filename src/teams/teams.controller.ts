@@ -71,4 +71,14 @@ export class TeamsController {
         }
         return team
     }
+
+    @Delete('/member/:id')
+    @UseGuards(JwtAuthGuard)
+    async deleteMember(@Param('id') id: string) {
+        const member = await this.teamsService.deleteMember(id)
+        if (member instanceof PrismaClientKnownRequestError) {
+            throw new NotFoundException
+        }
+        return member
+    }
 }

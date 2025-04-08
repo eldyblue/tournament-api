@@ -47,6 +47,16 @@ enum FinalStageFormat {
   DOUBLE_ELIMINATION
 }
 
+enum FinalStagePhaseFormat {
+  PAIR
+  ODD
+}
+
+enum FinalStagePhaseType {
+  WINNER
+  LOSER
+}
+
 model User {
   id         String       @id @default(cuid())
   username   String       @unique
@@ -65,7 +75,7 @@ model User {
 
 model Tournament {
   id          String      @id @default(cuid())
-  title       String
+  title       String      @unique
   image       String?
   description String?
   format      String
@@ -97,6 +107,8 @@ model Stage {
   contenders        Contender[]
   createdAt         DateTime    @default(now())
   updatedAt         DateTime    @updatedAt
+
+  @@unique([name, tournamentId])
 }
 
 model Phase {
@@ -113,6 +125,8 @@ model Phase {
   createdAt         DateTime    @default(now())
   updatedAt         DateTime    @updatedAt
   Match             Match[]
+
+  @@unique([name, stageId])
 }
 
 model Team {
